@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
+import Table from "./components/Table";
+import Row from "./components/Row"; // Add this import
 import "./styles.css";
 
 const initialData = {
@@ -47,20 +49,20 @@ const App = () => {
     }, 0);
   }, []);
 
-  const handleAllocationPercentage = (id, percentage) => {
+  const handleAllocationPercentage = (id) => {
     const updatedRows = updateRows(data.rows, id, (row) => {
       const originalValue = row.value;
-      row.value += (row.value * percentage) / 100;
+      row.value += (row.value * parseFloat(inputValue || 0)) / 100;
       row.variance = ((row.value - originalValue) / originalValue) * 100;
       return row;
     });
     setData({ ...data, rows: updatedRows });
   };
 
-  const handleAllocationValue = (id, newValue) => {
+  const handleAllocationValue = (id) => {
     const updatedRows = updateRows(data.rows, id, (row) => {
       const originalValue = row.value;
-      row.value = newValue;
+      row.value = parseFloat(inputValue || 0);
       row.variance = ((row.value - originalValue) / originalValue) * 100;
       return row;
     });
@@ -94,52 +96,29 @@ const App = () => {
 
   const renderRows = (rows) => {
     return rows.map((row) => (
-      <React.Fragment key={row.id}>
-        <tr>
-          <td>{row.label}</td>
-          <td>{row.value.toFixed(2)}</td>
-          <td>
-            <input
-              type="number"
-              placeholder="Enter value"
-              onChange={(e) => setInputValue(e.target.value)}
-            />
-            <button onClick={() => handleAllocationPercentage(row.id, parseFloat(inputValue || 0))}>
-              Allocation %
-            </button>
-            <button onClick={() => handleAllocationValue(row.id, parseFloat(inputValue || 0))}>
-              Allocation Val
-            </button>
-          </td>
-          <td>{row.variance?.toFixed(2) || 0}%</td>
-        </tr>
-        {row.children && renderRows(row.children)}
-      </React.Fragment>
+      <Row
+        key={row.id}
+        row={row}
+        handlePercentage={handleAllocationPercentage}
+        handleValue={handleAllocationValue}
+        setInputValue={setInputValue}
+        renderRows={renderRows}
+      />
     ));
   };
 
   return (
     <div className="App">
       <h1>Hierarchical Table with Variance</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Label</th>
-            <th>Value</th>
-            <th>Actions</th>
-            <th>Variance %</th>
-          </tr>
-        </thead>
-        <tbody>
-          {renderRows(data.rows)}
-          <tr>
-            <td>Grand Total</td>
-            <td>{calculateCurrentTotal(data.rows).toFixed(2)}</td>
-            <td></td>
-            <td>{grandTotalVariance.toFixed(2)}%</td>
-          </tr>
-        </tbody>
-      </table>
+      <Table
+        data={data}
+        handlePercentage={handleAllocationPercentage}
+        handleValue={handleAllocationValue}
+        setInputValue={setInputValue}
+        renderRows={renderRows}
+        grandTotal={calculateCurrentTotal(data.rows)}
+        grandVariance={grandTotalVariance}
+      />
     </div>
   );
 };
